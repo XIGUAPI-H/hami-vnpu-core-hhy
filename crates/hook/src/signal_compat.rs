@@ -1,7 +1,12 @@
 use once_cell::sync::Lazy;
 
-static REAL_SIGACTION: Lazy<extern "C" fn(libc::c_int, *const libc::sigaction, *mut libc::sigaction) -> libc::c_int> = Lazy::new(|| unsafe {
-    let ptr = libc::dlsym(libc::RTLD_NEXT, b"sigaction\0".as_ptr() as *const libc::c_char);
+static REAL_SIGACTION: Lazy<
+    extern "C" fn(libc::c_int, *const libc::sigaction, *mut libc::sigaction) -> libc::c_int,
+> = Lazy::new(|| unsafe {
+    let ptr = libc::dlsym(
+        libc::RTLD_NEXT,
+        b"sigaction\0".as_ptr() as *const libc::c_char,
+    );
     if ptr.is_null() {
         panic!("Cannot find original sigaction function!");
     }
@@ -25,6 +30,6 @@ pub extern "C" fn sigaction(
             }
         }
     }
-    
+
     ret
 }

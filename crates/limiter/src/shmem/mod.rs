@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicI32, AtomicU32, AtomicU64};
 
-pub mod setup;
 pub mod futex;
+pub mod setup;
 
 // =========================================================================================
 // GLOBAL SHARED MEMORY LAYOUT
@@ -15,7 +15,10 @@ pub struct GlobalManagerSlot {
     pub avg_kernel_time: AtomicU64,
     pub last_heartbeat: AtomicU64,
     pub is_active: AtomicU32,
-    pub priority: AtomicU64,
+    /// Workers blocked waiting for the next RUNNING batch (elastic scheduling signal).
+    pub wants_compute: AtomicU32,
+    /// Workers currently executing kernels in a RUNNING batch.
+    pub workers_active: AtomicU32,
 }
 
 #[repr(C)]
@@ -37,8 +40,6 @@ pub struct GlobalRegistry {
 // =========================================================================================
 
 pub const MAX_WORKERS: usize = 32;
-pub const MAX_PROCESSES: usize = 64;
-pub const NPU_DEVICE_MAX: usize = 8;
 
 pub type LocalState = u32;
 
@@ -53,47 +54,27 @@ pub struct LocalWorkerReport {
     pub cpu_start_us: AtomicU64,
     pub duration_us: AtomicU64,
     pub occupied: AtomicU32,
-    pub pid: AtomicI32,
 }
-
-#[repr(C)]
-#[derive(Debug)]
-pub struct ProcessSlot {
-    pub pid: AtomicI32,                        // container PID; 0 = free
-    pub hbm_used: [AtomicU64; NPU_DEVICE_MAX], // per-device HBM bytes; 4B pad precedes (host_pid removed)
-    pub is_active: AtomicU32,                  // 1 = registered
-}
-
-// The device-plugin monitor reads ProcessSlot by hardcoded byte offsets; lock the layout
-// so a field change fails the build here instead of corrupting its readings.
-const _: () = {
-    assert!(std::mem::size_of::<ProcessSlot>() == 80);
-    assert!(std::mem::offset_of!(ProcessSlot, pid) == 0);
-    assert!(std::mem::offset_of!(ProcessSlot, hbm_used) == 8);
-    assert!(std::mem::offset_of!(ProcessSlot, is_active) == 72);
-};
 
 #[repr(C)]
 #[derive(Debug)]
 pub struct LocalContainerShmem {
     pub memory_limit: AtomicU64,
     pub memory_used: AtomicU64,
-    pub compute_priority: AtomicU64,
 
     pub state: AtomicU32,
     pub batch_id: AtomicU64,
 
     pub tokens_remaining: AtomicU64,
+    /// Tokens held in worker thread-local caches (not yet reflected in tokens_remaining).
+    pub outstanding_token_debt: AtomicU64,
+    /// Threads blocked in wait_for_token while state is IDLE/MEASURING.
+    pub workers_waiting: AtomicU32,
+    /// Index in GlobalRegistry.slots (set by limiter daemon at startup).
+    pub global_slot_idx: AtomicU32,
 
     pub active_workers: AtomicU32,
     pub reported_count: AtomicU32,
 
     pub reports: [LocalWorkerReport; MAX_WORKERS],
-
-    pub procs: [ProcessSlot; MAX_PROCESSES],
-
-    pub manager_pid: AtomicI32,        // elected manager's container PID; 0 = none
-    pub manager_heartbeat: AtomicU64,  // manager heartbeat (us); stale => eligible for takeover
-    pub manager_global_idx: AtomicI32, // global slot the manager holds (for takeover reclaim)
-    pub initialized: AtomicU32,        // 1 once manager published limit/priority; workers wait on it
 }

@@ -9,8 +9,13 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-lazy_static = { workspace = true }
 libc = { workspace = true }
 limiter = { path = "../limiter" }
 once_cell = "1.18"
-log = "0.4"
+
+[features]
+default = []
+# Kylin lite: hook.rs wait_for_token path (no CoreLimiter / industry stack).
+kylin_lite = []
+# Full optimized: core_guard (CoreLimiter/LiteSem) + apply_quota meminfo + LLM burst hooks.
+optimized = ["limiter/core_scheduler"]

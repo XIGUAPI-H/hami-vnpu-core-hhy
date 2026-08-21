@@ -1,0 +1,93 @@
+ascend-download 软件包下载
+离线包制备与部署
+ascend-deployer 批量部署
+节点清单与 SSH 配置
+Kubernetes 集群部署
+MindCluster 组件清单部署
+MindCluster 版本升级
+部署前/后置节点任务
+Ascend Cert 软件签名校验
+参数面网络配置
+DMI 兼容性预检
+Atlas 兼容性检查
+带宽/算力/功耗测试
+性能测试报告输出
+容器 NPU 设备挂载
+vNPU 创建与销毁
+NPU 资源发现与注册
+设备分配 Allocate
+健康状态上报
+NPU 热复位
+NPU 拓扑亲和调度
+Gang 整组调度
+拓扑感知放置
+NUMA 亲和调度
+装箱 Binpack
+回填 Backfill
+任务重调度
+任务队列排队
+优先级 PriorityClass
+抢占 Preempt
+跨队列回收 Reclaim
+DRF 公平共享
+层级配额
+超配与借用
+整卡调度
+静态 vNPU 调度
+动态 vNPU 调度
+vCANN 软切分
+单卡多任务
+单容器多卡
+集群资源汇总
+故障信息汇总
+训练重计算控制
+推理故障协调
+节点健康检测
+故障节点隔离
+AscendJob CRD 生命周期
+多框架支持
+PodGroup 管理
+孤儿任务清理
+hccl.json 自动生成
+RankTable v1.2 大 EP
+多机多卡 RankTable
+超节点 SuperPod 调度
+多机多卡 Gang 调度
+训练 Worker 弹性伸缩
+TaskD 进程级故障恢复
+MindIO ACP Checkpoint 加速
+MindIO TFT 临终 CKPT
+断点续训全流程
+故障节点自动剔除
+训练任务自动重调度
+推理实例 Workload 管理
+推理 Service 编排
+推理实例扩缩容
+推理实例级重调度
+MindIE 推理服务部署
+AIBrix vLLM PD 分离
+OME SGLang PD 分离
+静态 vNPU 推理调度
+动态 vNPU 推理调度
+NPU 推理卡热复位
+推理卡故障重调度
+NPU 利用率监控
+硬件状态监控
+vNPU 指标监控
+Prometheus/Telegraf 集成
+集群级资源监控
+故障事件上报
+训练作业指标观测
+利用率异常检测
+故障告警事件
+日志清洗与转储
+根因节点分析
+故障事件分析
+设备资源分析
+网络拥塞分析
+掉卡诊断
+基础设施链路诊断
+训练过程在线诊断
+诊断报告输出
+无 K8s 容器恢复
+容器生命周期管理

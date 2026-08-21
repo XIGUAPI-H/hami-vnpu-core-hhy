@@ -49,11 +49,17 @@ docker run -d --rm -i --privileged -u root \
         cd $CONTAINER_PROJECT_DIR
         export RUST_LOG=debug
 
-        # Manager 现已内置于 libvnpu.so，随 LD_PRELOAD 自动启动，无需单独拉起 limiter
+        # 1. 启动 Manager 到后台，重定向输出到文件
+        echo '[Container] Starting Manager...'
+        ${LIMITER_PATH} > /${CONTAINER_PROJECT_DIR}/${LOG_PREFIX}_manager.log 2>&1 &
+        
+        # 2. 等待 Manager 完成初始化 (Futex & Shmem)
+        sleep 2
+        
         echo '[Container] Starting AI Application with LD_PRELOAD...'
         LD_PRELOAD=${LIBRARY_PATH} python3 /${CONTAINER_PROJECT_DIR}/hami-vnpu-core/test/resnet50.py --prio=${PRIORITY} 2>&1 | tee /${CONTAINER_PROJECT_DIR}/${LOG_PREFIX}_app.log
     "
 
 echo "--- [Host] 容器 $CONTAINER_NAME 已在后台启动 ---"
-echo "  (Manager 已内置于 libvnpu.so，其日志随 App 一起输出)"
+echo "监控 Manager 日志: tail -f $HOST_PROJECT_DIR/${LOG_PREFIX}_manager.log"
 echo "监控 App 日志:      tail -f $HOST_PROJECT_DIR/${LOG_PREFIX}_app.log"

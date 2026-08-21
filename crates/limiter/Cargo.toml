@@ -3,6 +3,11 @@ name = "limiter"
 version.workspace = true
 edition.workspace = true
 
+[features]
+default = []
+# vxpu timeslice CoreLimiter (LiteSem); off by default for smaller/faster libvnpu.so
+core_scheduler = []
+
 [dependencies]
 lazy_static = { workspace = true }
 libc = { workspace = true }

@@ -64,7 +64,12 @@ docker run --rm -it --privileged -u root \
         # Enable limiter debug logs (worker debug! included)
         # export RUST_LOG=debug
         # export NPU_FIXED_SHARE_RATIO=1
-        # Manager is now built into libvnpu.so and starts automatically via LD_PRELOAD.
+        # 1. Start Manager
+        ${LIMITER_PATH} > ${CONTAINER_PROJECT_DIR}/${LOG_PREFIX}_manager.log 2>&1 &
+        
+        sleep 2
+        
+        # 2. Start AI App (Corrected Path below)
         echo '[Container] Starting Interactive Test...'
         LD_PRELOAD=${LIBRARY_PATH} python3 -u ${CONTAINER_PROJECT_DIR}/hami-vnpu-core/script/mab/interactive_test.py --prio=${PRIORITY}
     "

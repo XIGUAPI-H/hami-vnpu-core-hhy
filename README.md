@@ -10,7 +10,8 @@ HAMi-vnpu-core has the following features:
 2. Limit npu utilization by time shard
 
 ## Components
-- **libvnpu.so (Interceptor + Manager)**: A dynamic library (`.so`) that intercepts NPU RTS API calls from AI frameworks to enforce constraints. On load it also spawns a lightweight **supervisor thread**. The supervisors of all processes in a Pod elect a single **Manager** that enforces the **Total Memory Quota** and **Compute Utilization** for that Pod. If the process hosting the manager exits or crashes, another process in the Pod automatically takes over. No separate daemon needs to be started.
+- **Limiter (Manager)**: Each Pod runs a dedicated `limiter` instance. Its primary responsibility is to enforce the **Total Memory Quota** and **Compute Utilization** for all processes within that specific Pod.
+- **libvnpu.so (Interceptor)**: A dynamic library (`.so`) that intercepts NPU RTS API calls from AI frameworks to enforce constraints.
 
 
 ## Prerequisites
@@ -30,7 +31,8 @@ cargo build
 ```
 
 Artifacts Location:
-- target/debug/**libvnpu.so**: The one and only artifact. It intercepts NPU calls AND hosts the manager (via an internal supervisor thread), so this is all you build and deploy.
+- target/debug/**limiter**: The Per-Pod daemon process binary.
+- target/debug/**libvnpu.so**: The Interceptor library.
 
 ## Deployment
 ### Host Environment preparation
@@ -44,12 +46,12 @@ sudo chmod 777 /tmp/hami-shared-region
 #### Step 1. Start Container
 - When starting the container, you must map the following:
 SHM Volume: Map the host's shared region (e.g.`/tmp/hami-shared-region`) to a container path (e.g., `/hami-shared-region`).
-- Map `libvnpu.so` into the container.
+- Map `limiter` and `libvnpu.so` into container.
 - `--privileged` is required for Ascend NPUs to be shared between containers when start docker containers.
 
 #### Step 2. Set Environment Variables:
 - **NPU_GLOBAL_SHM_PATH**: Define a unique filename within the **shared region**.
-> Note: You do NOT need to create this file manually; the manager (embedded in `libvnpu.so`) handles file creation and initialization. However, the path must be identical across all Pods to allow coordination.
+> Note: You do NOT need to create this file manually; the `limiter` handles file creation and initialization. However, the path must be identical across all Pods to allow coordination.
 
 - **NPU_MEM_QUOTA**: Memory limit for the specific Pod (in MB).
 
@@ -61,8 +63,14 @@ export NPU_MEM_QUOTA=10240 # 10GB HBM
 export NPU_PRIORITY=20 # use half of computing power than another one with priority 40
 ```
 
-#### Step 3. Launching the AI App:
-Just launch the AI application with the `LD_PRELOAD` environment variable pointing to the `libvnpu.so` library. The manager starts automatically inside the library (there is no separate daemon to launch), and the app's NPU calls are routed through it.
+#### Step 3. Launching the Limiter:
+Inside each container, the `limiter` process must start first as a background process.
+```
+./target/debug/limiter > limiter.log 2>&1 &
+```
+
+#### Step 4. Launching the AI App:
+The AI application must be launched with the `LD_PRELOAD` environment variable pointing to the `libvnpu.so` library. This forces the app to route NPU calls through the local Limiter.
 ```
 LD_PRELOAD=./target/debug/libvnpu.so python3 your_model.py
 ```

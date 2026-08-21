@@ -1,0 +1,28 @@
+# 68 vLLM pod — standalone hook aligned with node-61 memory model
+#
+# Key points (no hand-tuned VXPU_RT_RESERVE_MIB):
+#   - VXPU_MEM_LIMIT_MIB sets the pod quota at LD_PRELOAD ctor time
+#   - After profile, phys_free collapses → runtime pool frozen as memory_baseline
+#   - rtMalloc + meminfo only bill (tracked - baseline) against the full quota
+#   - Do not set VXPU_MEM_TOTAL_SCALE unless you know you need KV headroom tuning
+
+env:
+  - name: LD_PRELOAD
+    value: /mnt/local/m00953550/FinalTest/New/release/libvnpu.so
+  - name: VXPU_STANDALONE
+    value: "1"
+  - name: VXPU_MEM_LIMIT_MIB
+    value: "16000"
+  - name: VXPU_CORE_LIMIT_PERCENT
+    value: "25"
+  - name: ASCEND_RT_VISIBLE_DEVICES
+    value: "7"
+  # Optional: match limiter daemon if still started in the startup script
+  # - name: NPU_MEM_QUOTA
+  #   value: "16000"
+  #
+  # Advanced (usually leave unset):
+  # - name: VXPU_MEM_BASELINE_MIB
+  #   value: "7168"          # force runtime pool size instead of auto-freeze
+  # - name: VXPU_BASELINE_FREEZE_FREE_RATIO
+  #   value: "0.375"         # freeze when phys_free < ratio * quota (default 0.375)

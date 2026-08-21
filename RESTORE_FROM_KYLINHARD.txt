@@ -1,0 +1,35 @@
+﻿# Restored to kylinhard-era sources
+
+- Target binary: NAS `/nas/diskz/tmp/mhw/kylinso/kylinhard/libvnpu.so`
+  SHA256 `a38d1320964586335c2af99c536f54e5d115cd33a7f01c4a98b3aa61c92831ae`
+  (same as 68 `/mnt/local/m00953550/FinalTest/kylin/kylin-hard/libvnpu.so`)
+
+- Source commit used: `9a25dff` — "Add optimized hijack library path and supporting docs/scripts"
+  (committed 2026-07-20 in the squashed history; this is the closest surviving
+  tree to the ~2026-07-06 kylinhard optimized build)
+
+## Gap vs previous workspace (HEAD / post-7/21)
+
+Main differences that were **removed** by this restore:
+
+1. Cross-thread burst settle (`GLOBAL_BURST_NOTEBOOK` / `settle_xthread`)
+2. `repay_pending_before_open` hard repay path
+3. `BurstTrace` / `NPU_BURST_TRACE` notebook tracing extras
+4. Local BurstDiag (`timeslice_end` / `settle_at_sync`) patches
+
+`worker.rs`: ~2022 lines (new) → **1747** (kylinhard era)
+`hook_optimized.rs`: restored to **554** lines
+
+## Note
+
+Git history on 68 was reorganized on 2026-07-20; there is no exact Jul-6 commit
+object. Feature fingerprint of kylinhard binary (optimized hook + `end_kernel_burst`
++ no `settle_xthread`) matches `9a25dff`, not later `5b28715`/`bb2ea6d`.
+
+To rebuild on 68:
+```bash
+cd /mnt/local/m00953550/hami-vnpu-core
+git checkout 9a25dff
+# or sync this tree, then:
+bash /mnt/local/m00953550/FinalTest/kylin/smallmodel_ab/build_optimized_kylin_68.sh
+```
